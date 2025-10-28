@@ -1,0 +1,130 @@
+# W+ Space Configuration (Most Expressive, Recommended)
+# W+ provides per-layer latent codes for maximum control over StyleGAN2
+
+# Experiment settings
+experiment:
+  name: "t2f_wplus"
+  seed: 42
+  device: "cuda"  # cuda or cpu
+
+# Dataset configuration (matching paper)
+dataset:
+  data_root: "./data"  # Path to dataset root directory
+  caps_file: "caps.txt"  # Caption file name (relative to data_root)
+  img_dir: "img"  # Image directory name (relative to data_root)
+  image_size: 256  # Training resolution (paper uses 256x256 for memory efficiency)
+
+  # 3-way split for proper evaluation (matching ML best practices)
+  train_split: 0.8   # 80% for training
+  val_split: 0.1    # 10% for validation during training (hyperparameter tuning)
+  test_split: 0.1   # 10% for final evaluation only (NEVER used during training)
+
+  subset_size: null  # Use FULL dataset (null = all samples, paper uses full CelebA-HQ)
+  shuffle: true
+  num_workers: 2  # DataLoader workers (increase if you have more CPU cores)
+  return_paths: false
+
+  # Data augmentation (recommended for training to prevent overfitting)
+  use_augmentation: false  # Set to true if you want augmentation
+  augmentation:
+    horizontal_flip: true
+    horizontal_flip_prob: 0.5
+    color_jitter: false  # Disable to avoid changing face appearance too much
+    brightness: 0.1
+    contrast: 0.1
+    saturation: 0.1
+    hue: 0.05
+    rotation: false  # Disable rotation for faces (can distort features)
+    rotation_degrees: 10
+    affine: false
+    affine_scale: [0.9, 1.1]
+    affine_translate: [0.1, 0.1]
+
+# Model configuration
+model:
+  latent_space: "wplus"  # 18×512 = 9216-dimensional latent code
+
+  # Text encoder (BERT)
+  text_encoder:
+    model_name: "bert-base-uncased"
+    pooling: "mean"  # Changed to match notebook (was "cls")
+    embedding_dim: 768
+    max_length: 128
+    device: "cpu"  # Keep on CPU to save GPU memory
+    freeze: true
+
+  # Text-to-latent mapper (trainable part of the network)
+  mapper:
+    input_dim: 768  # BERT embedding dimension
+    intermediate_dims: [2304, 4608]  # Progressive expansion to W+ space
+    output_dim: 512  # Latent dimension per layer (W+ uses 18 × 512 = 9,216 dims internally)
+    activation: "relu"
+    dropout: 0.1  # Reduced from 0.2 to prevent underfitting
+    use_batch_norm: false  # Disable BatchNorm (incompatible with batch_size=1)
+    use_layer_norm: true  # Use LayerNorm instead (works with any batch size)
+
+  # StyleGAN2 generator
+  stylegan2:
+    model_path: "./pretrained_model/ffhq.pkl"
+    truncation_psi: 0.7  # Truncation trick (0.5-1.0)
+    noise_mode: "const"
+    w_plus_layers: 18
+
+  # Loss function (Content loss for training)
+  loss:
+    content_layers: ["conv3_3", "conv4_3", "conv5_3"]  # VGG layers for perceptual loss
+    style_layers: ["conv3_3", "conv4_3", "conv5_3"]  # Minimal style loss (paper focuses on content)
+    content_weight: 1.0  # Main loss component
+    style_weight: 1e-5  # Paper doesn't use style loss (set to 0)
+    tv_weight: 1e-6  # Small total variation for smoothness
+    vgg_input_size: 224  # Standard VGG input size (paper uses 224x224)
+
+# Training configuration
+training:
+  epochs: 500  # Full training (paper uses 500, but 100 is reasonable for initial run)
+  batch_size: 2  
+  gradient_accumulation_steps: 2  # Effective batch size = 4 (matches paper's batch size)
+  grad_clip: 1.0
+  validate_every: 1  # Validate every 5 epochs
+  save_every: 10  # Save checkpoint every 10 epochs
+  log_interval: 10
+  keep_last_n: 5  # Number of checkpoints to keep
+
+  # Evaluation settings (matching paper)
+  evaluate_every: null  # Run evaluation every 20 epochs to track progress
+  run_final_evaluation: true  # Run comprehensive evaluation after training
+
+  # Sample generation
+  save_samples_every: 10  # Save samples every 10 epochs
+  num_samples: 12  # Number of real-generated pairs to show
+
+  # Optimizer (matching paper)
+  optimizer:
+    type: "adam"  # Paper uses Adam optimizer
+    lr: 1.0e-4  # Paper uses 1e-4 learning rate
+    weight_decay: 0.0
+    betas: [0.9, 0.999]
+
+    # Learning rate scheduler
+    scheduler:
+      type: "plateau"  # Reduce LR on plateau
+      factor: 0.5
+      patience: 10
+      min_lr: 1.0e-7
+
+# Evaluation configuration (matching paper)
+evaluation:
+  enable_fid: true  # Fréchet Inception Distance (paper uses this)
+  enable_is: false   # Inception Score (not used in paper)
+  enable_lpips: false  # LPIPS (not used in paper, causes OOM)
+  enable_face_semantic: true  # Face Semantic Distance & Similarity (paper's main metric)
+  max_samples: None  # Use more samples for accurate metrics (was 100, increase to match paper)
+  batch_size: 32
+  save_images: true
+  num_eval_samples: 16  # Number of sample images to save in comparison grid
+
+  # Face Semantic metric configuration (USING FaceNet - MATCHING PAPER)
+  # FaceNet (InceptionResnetV1) pretrained on VGGFace2
+  # Outputs 512-dim face embeddings optimized for face recognition
+  # Expected FSD: ~0.9-1.2 (lower is better)
+  # Expected FSS: ~0.85-0.90 (higher is better, range [-1, 1])

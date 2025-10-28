@@ -1,0 +1,159 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+!src/data/
+tests/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Testing / Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ===== Project Specific =====
+
+# Training outputs
+experiments/
+checkpoint_models/
+outputs/
+runs/
+logs/
+*.log
+
+# Model checkpoints
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Pretrained models (keep pretrained_model/ folder structure)
+pretrained_model/*.pkl
+pretrained_model/*.pth
+pretrained_model/*.pt
+
+# Dataset
+/data/*
+!/data/.gitkeep
+/origin_data/*
+!/origin_data/.gitkeep
+*.zip
+*.tar
+*.tar.gz
+
+# Generated files
+generated_images/
+samples/
+generated/
+test_eval/
+
+# Images (except docs/assets)
+*.png
+*.jpg
+*.jpeg
+!docs/*.png
+!docs/*.jpg
+!assets/*.png
+!assets/*.jpg
+
+# Plots and visualizations
+plots/
+figures/
+*.pdf
+!docs/*.pdf
+
+# Documentation (AI-generated)
+ai-docs/
+docs/
+
+# External repos
+stylegan2-ada-pytorch/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ML frameworks
+wandb/
+mlruns/
+.nv/
+events.out.tfevents.*
+
+# Large files
+*.h5
+*.hdf5
+*.safetensors
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+
+# Claude AI
+.claude/
+.claudeignore

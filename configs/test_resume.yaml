@@ -1,0 +1,95 @@
+# Test configuration for resume training functionality
+# Quick test with small dataset and few epochs
+
+experiment:
+  name: "test_resume"
+  seed: 42
+  device: "cuda"
+
+dataset:
+  data_root: "./data"
+  caps_file: "caps.txt"
+  img_dir: "img"
+  image_size: 256
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  subset_size: 20          # Small dataset for quick test
+  shuffle: true
+  num_workers: 0
+  return_paths: false
+  use_augmentation: false
+
+model:
+  latent_space: "wplus"
+  
+  text_encoder:
+    model_name: "bert-base-uncased"
+    pooling: "mean"
+    embedding_dim: 768
+    max_length: 128
+    device: "cpu"
+    freeze: true
+  
+  mapper:
+    input_dim: 768
+    intermediate_dims: [1024, 2048]  # Smaller network for quick test
+    output_dim: 512
+    activation: "relu"
+    dropout: 0.1
+    use_batch_norm: false
+    use_layer_norm: true
+  
+  stylegan2:
+    model_path: "./pretrained_model/ffhq.pkl"
+    truncation_psi: 0.7
+    noise_mode: "const"
+    w_plus_layers: 18
+  
+  loss:
+    content_layers: ["conv3_3"]           # Single layer for speed
+    style_layers: ["conv3_3"]
+    content_weight: 1.0
+    style_weight: 0.0
+    tv_weight: 1e-7
+    vgg_input_size: 128                   # Smaller for memory
+
+training:
+  epochs: 5                                # Very short for testing
+  batch_size: 1                            # As requested for testing
+  gradient_accumulation_steps: 2
+  grad_clip: 1.0
+  validate_every: 2
+  save_every: 2
+  log_interval: 5
+  keep_last_n: 3
+  save_samples_every: 2
+  num_samples: 4                           # Fewer samples
+  
+  evaluate_every: null                     # Disable periodic evaluation
+  run_final_evaluation: false              # Disable final evaluation
+  
+  optimizer:
+    type: "adam"
+    lr: 1.0e-4
+    weight_decay: 0.0
+    betas: [0.9, 0.999]
+    
+    scheduler:
+      type: "plateau"
+      factor: 0.5
+      patience: 5
+      min_lr: 1.0e-7
+
+evaluation:
+  # Disable all metrics for speed
+  enable_fid: false
+  enable_is: false
+  enable_lpips: false
+  enable_face_semantic: false
+  
+  max_samples: null
+  num_eval_samples: 4
+  save_images: false
+  batch_size: 4
+  is_splits: 10

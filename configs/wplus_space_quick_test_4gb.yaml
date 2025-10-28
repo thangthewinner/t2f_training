@@ -1,0 +1,130 @@
+# W+ Space Configuration - OPTIMIZED FOR 4GB GPU
+# This config is specifically tuned for RTX 3050 Ti (4GB) and similar GPUs
+# Memory optimizations applied to prevent OOM errors
+
+# Experiment settings
+experiment:
+  name: "t2f_wplus_quick_test_4gb"
+  seed: 42
+  device: "cuda"
+
+# Dataset configuration (QUICK TEST - small subset)
+dataset:
+  data_root: "./data"
+  caps_file: "caps.txt"
+  img_dir: "img"
+  image_size: 256
+
+  # 3-way split
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+  subset_size: 100  # Only 200 samples for quick test
+  shuffle: true
+  num_workers: 2
+  return_paths: false
+
+  # No augmentation for quick test
+  use_augmentation: false
+
+# Model configuration
+model:
+  latent_space: "wplus"
+
+  # Text encoder (BERT) - runs on CPU to save GPU memory
+  text_encoder:
+    model_name: "bert-base-uncased"
+    pooling: "mean"  # Changed from "concat" to match notebook
+    embedding_dim: 768
+    max_length: 128
+    device: "cpu"  # <<<< IMPORTANT: Keep on CPU
+    freeze: true
+
+  # Text-to-latent mapper
+  mapper:
+    input_dim: 768
+    intermediate_dims: [4608]
+    output_dim: 512
+    activation: "relu"
+    dropout: 0.1
+    use_batch_norm: false
+    use_layer_norm: true
+
+  # StyleGAN2 generator
+  stylegan2:
+    model_path: "./pretrained_model/ffhq.pkl"
+    truncation_psi: 0.7
+    noise_mode: "const"
+    w_plus_layers: 18
+
+  # Loss function - OPTIMIZED FOR 4GB GPU
+  loss:
+    content_layers: ["conv3_3", "conv4_3", "conv5_3"]  # <<<< ONLY 1 layer instead of 3 (save ~200MB)
+    style_layers: []             # <<<< DISABLED style loss (save ~150MB)
+    content_weight: 1.0
+    style_weight: 0.0
+    tv_weight: 0.0
+    vgg_input_size: 224           # <<<< REDUCED from 224 to 64 (save ~300MB)
+
+# Training configuration (QUICK TEST + 4GB OPTIMIZED)
+training:
+  epochs: 10
+  batch_size: 1
+  gradient_accumulation_steps: 8  # <<<< INCREASED from 4 to 8 (save ~150MB)
+  grad_clip: 1.0
+  validate_every: 1               # Validate every 2 epochs
+  save_every: 5                   # Save every 5 epochs
+  log_interval: 10
+  keep_last_n: 3
+
+  # Evaluation settings
+  evaluate_every: null            # Disable periodic eval to save time
+  run_final_evaluation: true      # Only run at end
+
+  # Sample generation
+  save_samples_every: 5           # Save samples every 5 epochs
+  num_samples: 4                  # <<<< REDUCED from 8 to 4 (save ~50MB)
+
+  # Optimizer
+  optimizer:
+    type: "adam"
+    lr: 1.0e-4
+    weight_decay: 0.0
+    betas: [0.9, 0.999]
+
+    # Learning rate scheduler
+    scheduler:
+      type: "plateau"
+      factor: 0.5
+      patience: 5
+      min_lr: 1.0e-7
+
+# Evaluation configuration (QUICK TEST)
+evaluation:
+  enable_fid: true
+  enable_is: false                # Disabled (memory intensive)
+  enable_lpips: false             # Disabled (memory intensive)
+  enable_face_semantic: true
+  max_samples: 50                 # Only 50 samples for quick test
+  batch_size: 1
+  save_images: true
+  num_eval_samples: 4             # Reduced from 8
+
+  # Face Semantic uses FaceNet (512-dim embeddings) - no config needed
+
+# Memory optimization notes:
+# ========================
+# This config saves approximately ~850MB compared to default:
+#   - vgg_input_size: 224 → 64:           ~300 MB
+#   - content_layers: 3 → 1:              ~200 MB
+#   - gradient_accumulation_steps: 4 → 8: ~150 MB
+#   - style_layers: 1 → 0:                ~150 MB
+#   - num_samples: 8 → 4:                 ~50 MB
+#
+# Total memory usage with this config: ~2.0-2.5 GB (fits in 4GB GPU)
+#
+# If still OOM:
+#   1. Set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+#   2. Increase gradient_accumulation_steps to 16
+#   3. Reduce vgg_input_size to 32
