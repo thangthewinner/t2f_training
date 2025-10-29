@@ -6,6 +6,8 @@
 
 A production-ready PyTorch implementation of **Text-to-Face Generation with StyleGAN2** by Ayanthi & Munasinghe (2022). Generate high-quality face images (1024×1024) from textual descriptions using BERT embeddings and StyleGAN2.
 
+Demo repo: https://github.com/thangthewinner/t2f_demo 
+
 ---
 
 ## Key Features
@@ -330,6 +332,48 @@ t2f_training/
 ├── requirements.txt               # Python dependencies
 └── README.md                      # This file
 ```
+
+---
+
+## Performance Comparison
+
+Evaluation on CelebA dataset using face-specific semantic metrics:
+
+| Model | FSD ↓ | FSS (%) ↑ |
+|-------|-------|-----------|
+| AttnGAN [3] | 1.269 | 59.28 |
+| StackGAN [2] | 1.310 | - |
+| FTGAN [4] | 1.267 | 59.41 |
+| Realistic Image Generation [5] | 1.118 | - |
+| StyleGAN2 [1] | 0.9224 | 56.96 |
+| **Ours** | **1.0595** | **42.25** |
+
+**Metrics:**
+- **FSD (Fréchet Semantic Distance)**: Measures semantic similarity between generated and real faces using FaceNet embeddings. Lower is better.
+- **FSS (Face Semantic Similarity)**: Measures similarity percentage between text description and generated face. Higher is better.
+
+---
+
+## References
+
+[1] **Text-to-Face Generation with StyleGAN2**  
+D. M. A. Ayanthi, Sarasi Munasinghe  
+[arXiv:2205.12512](https://arxiv.org/abs/2205.12512)
+
+[2] **StackGAN: Text to Photo-realistic Image Synthesis with Stacked Generative Adversarial Networks**  
+Han Zhang, Tao Xu, Hongsheng Li, Shaoting Zhang, Xiaogang Wang, Xiaolei Huang, Dimitris Metaxas  
+[arXiv:1612.03242](https://arxiv.org/abs/1612.03242)
+
+[3] **AttnGAN: Fine-Grained Text to Image Generation with Attentional Generative Adversarial Networks**  
+Tao Xu, Pengchuan Zhang, Qiuyuan Huang, Han Zhang, Zhe Gan, Xiaolei Huang, Xiaodong He  
+[arXiv:1711.10485](https://arxiv.org/abs/1711.10485)
+
+[4] **FTGAN: A Fully-trained Generative Adversarial Networks for Text to Face Generation**  
+Xiang Chen, Lingbo Qing, Xiaohai He, Xiaodong Luo, Yining Xu  
+[arXiv:1904.05729](https://arxiv.org/abs/1904.05729)
+
+[5] **A Realistic Image Generation of Face From Text Description Using the Fully Trained Generative Adversarial Networks**  
+[ResearchGate](https://www.researchgate.net/publication/343565403_A_Realistic_Image_Generation_of_Face_From_Text_Description_Using_the_Fully_Trained_Generative_Adversarial_Networks)
 
 ---
 
